@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QADAM TAXI">
+<title>QADAM TAXI</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<!-- Локальный Leaflet CSS (файл лежит в папке public) -->
+<link rel="stylesheet" href="/leaflet.css"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;font-family:-apple-system,Inter,Arial,sans-serif;background:#f4f6f8;color:#17202a;font-size:15px}
+.hidden{display:none !important}
+input,select,button{font-family:inherit}
+
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#111827,#1f2937);padding:16px}
+.auth-card{width:100%;max-width:420px;background:#fff;border-radius:20px;padding:26px;box-shadow:0 20px 60px #0006}
+.auth-logo{font-size:26px;font-weight:900;letter-spacing:1px;margin-bottom:4px}
+.auth-logo span{color:#ffd400}
+.auth-sub{color:#687386;font-size:14px;margin-bottom:20px}
+.tabs{display:flex;background:#f3f4f6;border-radius:10px;padding:4px;margin-bottom:18px}
+.tabs button{flex:1;border:0;background:transparent;padding:11px;border-radius:8px;font-weight:700;cursor:pointer;color:#687386;font-size:14px}
+.tabs button.active{background:#fff;color:#111;box-shadow:0 2px 8px #0001}
+.field{margin:10px 0}
+.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:#657083}
+.field input,.field select{width:100%;padding:14px;border:1px solid #d7dde5;border-radius:10px;font-size:15px;background:#fff}
+.field input:focus,.field select:focus{outline:2px solid #ffd400;border-color:transparent}
+.auth-btn{background:#ffd400;color:#111;width:100%;padding:15px;border:0;border-radius:10px;font-weight:800;cursor:pointer;font-size:16px;margin-top:6px}
+.auth-error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;font-size:13px;margin-bottom:12px;font-weight:600}
+.auth-demo{background:#f0f9ff;color:#075985;padding:12px;border-radius:10px;font-size:12px;margin-top:18px;line-height:1.7}
+
+header{height:56px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;position:sticky;top:0;z-index:1000}
+.logo{font-weight:900;letter-spacing:1px;font-size:16px}
+.logo span{color:#ffd400}
+.header-right{display:flex;gap:8px;align-items:center}
+.user-chip{background:#1f2937;padding:6px 10px;border-radius:8px;font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-chip b{color:#ffd400}
+.logout{background:transparent;border:1px solid #374151;color:#d1d5db;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600}
+
+main{padding:12px;max-width:1200px;margin:0 auto}
+.screen{display:none}.screen.active{display:block}
+.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 14px #0000000f;margin-bottom:12px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 10px}
+.muted{color:#687386;font-size:13px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.primary{background:#ffd400;color:#111;width:100%;padding:15px;border:0;border-radius:12px;font-weight:800;cursor:pointer;font-size:16px}
+.primary:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
+.secondary{background:#eef1f5;color:#222;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;font-size:14px}
+.danger{background:#fee2e2;color:#991b1b;width:100%;padding:13px;border:0;border-radius:12px;font-weight:700;cursor:pointer;font-size:14px;margin-top:10px}
+.status{padding:12px 14px;border-radius:10px;background:#f0f3f7;margin:8px 0;font-weight:700;font-size:14px;text-align:center}
+.status.search{background:#fef3c7;color:#92400e}
+.status.done{background:#dcfce7;color:#166534}
+.status.cancel{background:#fee2e2;color:#991b1b}
+.money{font-size:26px;font-weight:900;margin:8px 0;text-align:center}
+.badge{padding:5px 9px;border-radius:20px;background:#eef1f5;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block}
+.green{background:#dcfce7;color:#166534}
+.yellow{background:#fef3c7;color:#92400e}
+.red{background:#fee2e2;color:#991b1b}
+.blue{background:#dbeafe;color:#1e40af}
+.gray{background:#f3f4f6;color:#6b7280}
+.map-slot{height:320px;border-radius:14px;overflow:hidden;box-shadow:0 3px 14px #0000000f;background:#dfe8dc;margin-bottom:12px}
+.leaflet-container{height:100%;width:100%;font-family:inherit}
+.driver{display:flex;justify-content:space-between;align-items:center;padding:11px;background:#f7f8fa;border-radius:10px;font-size:13px;margin-bottom:8px;gap:8px}
+.driver-name{font-weight:700;font-size:14px}
+.driver-sub{font-size:11px;color:#687386;margin-top:2px}
+.history-item{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f3f7;font-size:13px;gap:8px}
+.empty{text-align:center;color:#9ca3af;padding:16px;font-size:13px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid #edf0f3;font-size:12px;white-space:nowrap}
+th{font-weight:700;color:#657083;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat{background:#fff;padding:14px;border-radius:12px;box-shadow:0 3px 14px #0000000f}
+.stat b{display:block;font-size:22px;margin-top:4px;color:#111}
+.stat small{font-size:11px;color:#687386;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.chat-box{margin-top:12px;border-top:1px solid #eef1f5;padding-top:12px}
+.chat-box h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#657083}
+.chat-messages{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0;margin-bottom:10px}
+.chat-msg{max-width:85%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.4;word-wrap:break-word}
+.chat-msg.mine{align-self:flex-end;background:#ffd400;color:#111;border-bottom-right-radius:3px}
+.chat-msg.theirs{align-self:flex-start;background:#eef1f5;color:#111;border-bottom-left-radius:3px}
+.chat-meta{font-size:10px;color:#9ca3af;margin-bottom:2px}
+.chat-input{display:flex;gap:6px}
+.chat-input input{flex:1;padding:12px;font-size:14px;border:1px solid #d7dde5;border-radius:10px;background:#fff}
+.chat-input button{padding:12px 18px;background:#111827;color:#fff;border:0;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 20px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:0 10px 30px #0004;opacity:0;pointer-events:none;transition:.3s;z-index:2000;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+.toast.error{background:#991b1b}
+.car-marker{background:transparent;border:0}
+.car-marker div{background:#ffd400;border:2px solid #111;width:34px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 6px #0004}
+.car-marker.me div{background:#2563eb;color:#fff}
+.car-marker.gps div{background:#22c55e;color:#fff}
+.pin-marker{background:transparent;border:0}
+.pin-marker div{width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 6px #0006}
+.qr-block{text-align:center;padding:14px;background:#f9fafb;border-radius:12px;margin-top:12px}
+.qr-block img{width:180px;height:180px;border-radius:8px}
+.qr-block p{font-size:12px;color:#687386;margin:8px 0 0;word-break:break-all}
+.gps-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:#f0f3f7;font-size:12px;font-weight:600;margin:8px 0}
+.gps-bar .dot{width:8px;height:8px;border-radius:50%;background:#9ca3af}
+.gps-bar.active{background:#dcfce7;color:#166534}
+.gps-bar.active .dot{background:#22c55e;animation:pulse 1.5s infinite}
+.gps-bar.error{background:#fee2e2;color:#991b1b}
+.gps-bar.error .dot{background:#ef4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.loc-input{display:flex;gap:6px;align-items:stretch}
+.loc-input input{flex:1;min-width:0}
+.loc-btn{background:#eef1f5;border:0;border-radius:10px;padding:0 14px;cursor:pointer;font-size:18px;flex-shrink:0}
+.loc-btn.active{background:#2563eb;color:#fff;animation:pulse 1.2s infinite}
+.suggest{position:relative;background:#fff;border-radius:10px;box-shadow:0 6px 20px #0002;margin-top:4px;max-height:240px;overflow-y:auto;display:none;border:1px solid #eef1f5}
+.suggest.show{display:block}
+.suggest-item{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f3f7;line-height:1.35}
+.suggest-item:last-child{border-bottom:0}
+.suggest-item:hover{background:#f7f8fa}
+.suggest-item small{color:#9ca3af;display:block;font-size:11px;margin-top:2px}
+.suggest-item .src{float:right;font-size:10px;color:#9ca3af;font-weight:600}
+.search-status{padding:8px 12px;font-size:12px;color:#687386;text-align:center}
+.search-status.error{color:#991b1b;background:#fee2e2;border-radius:8px;margin-top:4px;font-weight:600}
+
+.quick-title{font-size:11px;font-weight:700;color:#657083;text-transform:uppercase;letter-spacing:.4px;margin:8px 0 6px}
+.quick-grid{display:flex;flex-wrap:wrap;gap:6px}
+.quick-btn{background:#f3f4f6;border:1px solid #e5e7eb;color:#374151;font-size:12px;padding:7px 11px;border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap}
+.quick-btn:hover{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.quick-btn.from:hover{background:#dcfce7;border-color:#86efac;color:#166534}
+.quick-btn.to:hover{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+
+.calc{background:#f9fafb;border-radius:10px;padding:12px;margin:12px 0;font-size:13px}
+.calc .row{padding:3px 0}
+.calc b{font-size:15px}
+
+.notify-banner{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px;display:flex;gap:10px;align-items:center;box-shadow:0 10px 30px #0004;z-index:1500;max-width:92vw}
+.notify-banner button{background:#ffd400;color:#111;border:0;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px}
+.notify-banner .close{background:transparent;color:#9ca3af;padding:4px;font-size:16px}
+
+@media(min-width:900px){
+  main{padding:20px}
+  .grid-2{display:grid;grid-template-columns:440px 1fr;gap:18px;align-items:start}
+  .map-slot{height:560px}
+  .stats{grid-template-columns:repeat(5,1fr)}
+  .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .stat b{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">QADAM <span>TAXI</span></div>
+    <div class="auth-sub">Войдите или создайте аккаунт</div>
+    <div class="tabs">
+      <button id="tabLogin" class="active" onclick="switchAuth('login')">Вход</button>
+      <button id="tabRegister" onclick="switchAuth('register')">Регистрация</button>
+    </div>
+    <div id="authError" class="auth-error hidden"></div>
+    <div id="loginForm">
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Пароль</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+      <button class="auth-btn" onclick="doLogin()">Войти</button>
+    </div>
+    <div id="registerForm" class="hidden">
+      <div class="field"><label>Имя</label><input id="regName" type="text"></div>
+      <div class="field"><label>Email</label><input id="regEmail" type="email" inputmode="email"></div>
+      <div class="field"><label>Пароль</label><input id="regPassword" type="password"></div>
+      <div class="field"><label>Телефон</label><input id="regPhone" type="tel" inputmode="tel"></div>
+      <div class="field"><label>Я — </label>
+        <select id="regRole">
+          <option value="passenger">Пассажир</option>
+          <option value="driver">Водитель</option>
+          <option value="admin">Оператор</option>
+        </select>
+      </div>
+      <button class="auth-btn" onclick="doRegister()">Создать аккаунт</button>
+    </div>
+    <div class="auth-demo">
+      <b>Демо-входы:</b><br>
+      Оператор: <b>admin@qadam.kz</b> / admin<br>
+      Пассажир: <b>pass@qadam.kz</b> / 123456<br>
+      Водитель: <b>erlan@qadam.kz</b> / 123456
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <div class="logo">QADAM <span>TAXI</span></div>
+  <div class="header-right">
+    <div class="user-chip" id="userChip"></div>
+    <button class="logout" onclick="doLogout()">Выйти</button>
+  </div>
+</header>
+<main>
+
+<section id="passenger" class="screen">
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <h2>🚕 Заказать такси</h2>
+
+        <div class="field">
+          <label>Откуда</label>
+          <div class="loc-input">
+            <input id="fromInput" type="text" placeholder="Начните вводить адрес…" autocomplete="off">
+            <button class="loc-btn" id="fromBtn" onclick="startPicking('from')" title="Указать на карте">📍</button>
+          </div>
+          <div id="fromSuggest" class="suggest"></div>
+          <div id="fromStatus" class="search-status"></div>
+        </div>
+
+        <div class="field">
+          <label>Куда</label>
+          <div class="loc-input">
+            <input id="toInput" type="text" placeholder="Начните вводить адрес…" autocomplete="off">
+            <button class="loc-btn" id="toBtn" onclick="startPicking('to')" title="Указать на карте">📍</button>
+          </div>
+          <div id="toSuggest" class="suggest"></div>
+          <div id="toStatus" class="search-status"></div>
+        </div>
+
+        <div class="quick-title">Быстрый выбор · Откуда</div>
+        <div class="quick-grid" id="quickFrom"></div>
+        <div class="quick-title" style="margin-top:12px">Быстрый выбор · Куда</div>
+        <div class="quick-grid" id="quickTo"></div>
+
+        <div class="field" style="margin-top:14px"><label>Класс автомобиля</label>
+          <select id="class">
+            <option>Эконом</option>
+            <option>Комфорт</option>
+            <option>Минивэн</option>
+          </select>
+        </div>
+
+        <div class="calc">
+          <div class="row"><span class="muted">Расстояние</span><b id="distLabel">—</b></div>
+          <div class="row"><span class="muted">Стоимость</span><b id="priceTag" style="color:#111;font-size:18px">—</b></div>
+        </div>
+
+        <button id="orderBtn" class="primary" onclick="createOrder()">Заказать такси</button>
+        <div id="orderError" class="search-status"></div>
+      </div>
+
+      <div class="card" id="passOrderCard" style="display:none">
+        <h3>Моя поездка</h3>
+        <div id="passStatus" class="status">—</div>
+        <div class="row"><span class="muted">Стоимость</span><b id="passPrice">—</b></div>
+        <div class="row" style="margin-top:5px"><span class="muted">Водитель</span><b id="passDriver">—</b></div>
+        <div class="row" style="margin-top:5px"><span class="muted">Машина</span><b id="passCar">—</b></div>
+        <button id="cancelBtn" class="danger" onclick="cancelOrder()">Отменить заказ</button>
+        <div id="passChat" class="chat-box hidden">
+          <h4>Чат с водителем</h4>
+          <div id="passChatMessages" class="chat-messages"></div>
+          <div class="chat-input">
+            <input id="passChatInput" placeholder="Сообщение…" onkeydown="if(event.key==='Enter')sendMessage('passenger')">
+            <button onclick="sendMessage('passenger')">→</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>История</h3>
+        <div id="passHistory" style="max-height:240px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div>
+      <div class="map-slot" id="slot-passenger"></div>
+      <div class="muted" style="text-align:center;padding:4px">
+        💡 Тапни по карте — точка сама встанет в первое пустое поле. Или введи адрес, или выбери быстрый вариант.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="driver" class="screen">
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <h2>🚖 Кабинет водителя</h2>
+        <div class="row">
+          <span class="muted">Статус</span>
+          <button id="onlineBtn" class="secondary" onclick="toggleOnline()">—</button>
+        </div>
+        <div id="gpsBar" class="gps-bar"><span class="dot"></span><span id="gpsText">GPS не активен</span></div>
+        <hr style="border:0;border-top:1px solid #eef1f5;margin:12px 0">
+        <div id="driverOrder"></div>
+      </div>
+      <div class="card">
+        <h3>Сегодня</h3>
+        <div class="money" id="driverEarn">0 ₸</div>
+        <div class="muted" id="driverTrips" style="text-align:center">0 поездок</div>
+        <div class="muted" id="driverGross" style="text-align:center;margin-top:6px">—</div>
+      </div>
+    </div>
+    <div><div class="map-slot" id="slot-driver"></div></div>
+  </div>
+</section>
+
+<section id="admin" class="screen">
+  <div class="stats">
+    <div class="stat"><small>Заказы</small><b id="aOrders">0</b></div>
+    <div class="stat"><small>Водители онлайн</small><b id="aDrivers">0</b></div>
+    <div class="stat"><small>Активные</small><b id="aActive">0</b></div>
+    <div class="stat"><small>Оборот</small><b id="aRevenue">0 ₸</b></div>
+    <div class="stat"><small>Комиссия</small><b id="aCommission" style="color:#166534">0 ₸</b></div>
+  </div>
+  <div class="admin-grid">
+    <div>
+      <div class="map-slot" id="slot-admin" style="height:420px"></div>
+      <div class="card"><h3>Водители</h3><div id="adminDrivers"></div></div>
+      <div class="card">
+        <h3>QR для телефонов</h3>
+        <div class="qr-block"><img id="qrImg" alt="QR"><p id="qrUrl"></p></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Все заказы</h2>
+        <div class="table-wrap" style="max-height:600px;overflow-y:auto">
+          <table>
+            <thead><tr><th>ID</th><th>Маршрут</th><th>Цена</th><th>Комиссия</th><th>Водителю</th><th>Статус</th></tr></thead>
+            <tbody id="orders"></tbody>
+          </table>
+        </div>
+        <button class="danger" onclick="clearAll()">Очистить все заказы</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<div id="toast" class="toast"></div>
+</div>
+
+<!-- Локальный Leaflet JS (файл лежит в папке public) -->
+<script src="/leaflet.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shortName = s => { s = String(s || ''); return s.length > 45 ? s.slice(0, 45) + '…' : s; };
+
+let TOKEN = localStorage.getItem('qadam_token') || '';
+let ME = null;
+let state = { orders:[], drivers:[], commissionRate: 0.15 };
+let presetLocations = [];
+let currentOrderId = null, ws = null;
+let geoWatchId = null, lastLocationSentAt = 0;
+let notifPermission = (typeof Notification !== 'undefined') ? Notification.permission : 'denied';
+let soundCtx = null;
+
+let fromPoint = null;
+let toPoint = null;
+let pickingMode = null;
+let searchTimers = { from:null, to:null };
+
+const PRICING = { base:400, perKm:120, minFare:500, classMult:{ 'Эконом':1.0, 'Комфорт':1.4, 'Минивэн':1.7 } };
+const CITY_CENTER = { lat: 42.3167, lng: 69.5950 };
+
+/* ================= УТИЛИТЫ ================= */
+function toast(msg, isError){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), isError ? 4500 : 2600);
+}
+function haversine(a, b){
+  const R=6371;
+  const dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
+  const la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+function calcPrice(km, cls){
+  const m = PRICING.classMult[cls] || 1;
+  return Math.max(PRICING.minFare, Math.round(((PRICING.base + km*PRICING.perKm)*m)/50)*50);
+}
+
+/* ================= ЗВУК / ВИБРАЦИЯ ================= */
+function playOrderBeep(){
+  try {
+    if(!soundCtx) soundCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(soundCtx.state === 'suspended') soundCtx.resume();
+    const now = soundCtx.currentTime;
+    [880, 660, 880].forEach((freq, i) => {
+      const osc = soundCtx.createOscillator();
+      const gain = soundCtx.createGain();
+      osc.connect(gain); gain.connect(soundCtx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      const t0 = now + i * 0.22;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      osc.start(t0); osc.stop(t0 + 0.2);
+    });
+  } catch(e){}
+}
+function vibrate(p){ if(navigator.vibrate) try { navigator.vibrate(p); } catch(e){} }
+
+/* ================= SW / УВЕДОМЛЕНИЯ ================= */
+async function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try { await navigator.serviceWorker.register('/sw.js'); } catch(e){}
+}
+function showNotifyBanner(){
+  if(notifPermission === 'granted') return;
+  if(localStorage.getItem('qadam_notify_asked') === 'dismissed') return;
+  if(document.getElementById('notifyBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'notifyBanner';
+  b.className = 'notify-banner';
+  b.innerHTML = `<span>🔔 Включить уведомления о заказах?</span>
+    <button onclick="askNotifications()">Включить</button>
+    <button class="close" onclick="dismissNotifyBanner()">✕</button>`;
+  document.body.appendChild(b);
+}
+function dismissNotifyBanner(){
+  localStorage.setItem('qadam_notify_asked', 'dismissed');
+  document.getElementById('notifyBanner')?.remove();
+}
+async function askNotifications(){
+  try {
+    const p = await Notification.requestPermission();
+    notifPermission = p;
+    document.getElementById('notifyBanner')?.remove();
+    if(p === 'granted'){ toast('🔔 Уведомления включены'); playOrderBeep(); vibrate([100,50,100]); }
+  } catch(e){}
+}
+async function showNotification(title, body, tag){
+  if(notifPermission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const opts = { body, icon:'/icon.svg', badge:'/icon.svg',
+      tag: tag || 'qadam-order', renotify:true,
+      vibrate:[300,100,300,100,300], requireInteraction:true };
+    if(reg?.showNotification) reg.showNotification(title, opts);
+    else new Notification(title, opts);
+  } catch(e){}
+}
+
+/* ================= API ================= */
+async function api(path, opts = {}){
+  const res = await fetch(path, { ...opts,
+    headers: { 'Content-Type':'application/json',
+      ...(TOKEN ? {'Authorization':'Bearer '+TOKEN} : {}),
+      ...(opts.headers||{}) }});
+  if(res.status === 401){ doLogout(); throw new Error('Сессия истекла, войдите снова'); }
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok){
+    const msg = data.error || `Ошибка сервера (${res.status})`;
+    console.error('[api]', path, res.status, data);
+    throw new Error(msg);
+  }
+  return data;
+}
+
+/* ================= АВТОРИЗАЦИЯ ================= */
+function switchAuth(mode){
+  const isLogin = mode === 'login';
+  $('#tabLogin').classList.toggle('active', isLogin);
+  $('#tabRegister').classList.toggle('active', !isLogin);
+  $('#loginForm').classList.toggle('hidden', !isLogin);
+  $('#registerForm').classList.toggle('hidden', isLogin);
+  $('#authError').classList.add('hidden');
+}
+function showErr(m){ const el = $('#authError'); el.textContent = m; el.classList.remove('hidden'); }
+async function doLogin(){
+  try {
+    const data = await api('/api/login', { method:'POST',
+      body: JSON.stringify({ email: $('#loginEmail').value.trim(), password: $('#loginPassword').value }) });
+    TOKEN = data.token; ME = data.user;
+    localStorage.setItem('qadam_token', TOKEN);
+    await enterApp();
+  } catch(e){ showErr(e.message); }
+}
+async function doRegister(){
+  try {
+    const data = await api('/api/register', { method:'POST',
+      body: JSON.stringify({
+        name: $('#regName').value.trim(),
+        email: $('#regEmail').value.trim(),
+        password: $('#regPassword').value,
+        phone: $('#regPhone').value.trim(),
+        role: $('#regRole').value
+      }) });
+    TOKEN = data.token; ME = data.user;
+    localStorage.setItem('qadam_token', TOKEN);
+    await enterApp();
+  } catch(e){ showErr(e.message); }
+}
+async function doLogout(){
+  stopGeolocation();
+  try { if(TOKEN) await api('/api/logout', { method:'POST' }); } catch(e){}
+  TOKEN = ''; ME = null;
+  localStorage.removeItem('qadam_token');
+  $('#app').classList.add('hidden');
+  $('#authScreen').classList.remove('hidden');
+  if(ws){ ws.close(); ws = null; }
+}
+
+/* ================= СТАРТ ================= */
+async function enterApp(){
+  $('#userChip').innerHTML = `👤 <b>${esc(ME.name)}</b>`;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const scr = ME.role === 'admin' ? 'admin' : ME.role;
+  $('#' + scr).classList.add('active');
+  $('#authScreen').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+
+  try { presetLocations = await api('/api/preset-locations'); } catch(e){ presetLocations = []; }
+
+  await refreshState();
+  connectWS();
+
+  setTimeout(() => {
+    initMap('slot-' + scr);
+    drawMap();
+    if(ME.role === 'admin') loadQR();
+  }, 100);
+
+  if(ME.role === 'driver') showNotifyBanner();
+  if(ME.role === 'passenger'){
+    setupAddressInput('fromInput', 'fromSuggest', 'fromStatus', 'from');
+    setupAddressInput('toInput',   'toSuggest',   'toStatus',   'to');
+    renderQuickPicks();
+  }
+  updatePrice();
+}
+
+/* ================= ГОТОВЫЕ ТОЧКИ ================= */
+function renderQuickPicks(){
+  const fromBox = $('#quickFrom');
+  const toBox   = $('#quickTo');
+  if(!fromBox || !toBox) return;
+
+  const html = presetLocations.slice(0, 10).map((p, i) =>
+    `<button class="quick-btn" data-i="${i}" data-target="{TARGET}">${esc(p.name)}</button>`
+  ).join('');
+
+  fromBox.innerHTML = html.replace(/{TARGET}/g, 'from');
+  toBox.innerHTML   = html.replace(/{TARGET}/g, 'to');
+
+  fromBox.querySelectorAll('.quick-btn').forEach(btn => {
+    btn.classList.add('from');
+    btn.onclick = () => {
+      const p = presetLocations[Number(btn.dataset.i)];
+      setFrom({ lat:p.lat, lng:p.lng, name:p.name });
+      toast('📍 ' + p.name);
+      if(navigator.vibrate) navigator.vibrate(40);
+    };
+  });
+  toBox.querySelectorAll('.quick-btn').forEach(btn => {
+    btn.classList.add('to');
+    btn.onclick = () => {
+      const p = presetLocations[Number(btn.dataset.i)];
+      setTo({ lat:p.lat, lng:p.lng, name:p.name });
+      toast('🎯 ' + p.name);
+      if(navigator.vibrate) navigator.vibrate(40);
+    };
+  });
+}
+
+/* ================= WEBSOCKET ================= */
+function connectWS(){
+  if(ws) ws.close();
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onopen = () => ws.send(JSON.stringify({ type:'auth', token: TOKEN }));
+  ws.onmessage = e => {
+    const d = JSON.parse(e.data);
+    if(d.type === 'state'){
+      state = { orders:d.orders, drivers:d.drivers, commissionRate: d.commissionRate ?? 0.15 };
+      render(); drawMap();
+    }
+    else if(d.type === 'message' && d.orderId === currentOrderId) loadMessages();
+    else if(d.type === 'driver-moved'){
+      const drv = state.drivers.find(x => x.id === d.driverId);
+      if(drv){ drv.lat = d.lat; drv.lng = d.lng; drv.status = d.status; updateDriverMarker(drv); }
+    }
+    else if(d.type === 'new-order'){
+      playOrderBeep();
+      vibrate([400, 150, 400, 150, 400]);
+      showNotification(
+        '🚕 Новый заказ',
+        `${d.order.fromName}\n→ ${d.order.toName}\n${d.order.price.toLocaleString('ru-RU')} ₸ (вам ${d.order.driverEarning.toLocaleString('ru-RU')} ₸)`,
+        'new-order-' + d.order.id
+      );
+      toast('🔔 Новый заказ!');
+    }
+    else if(d.type === 'order-cancelled'){
+      vibrate([200, 100, 200]);
+      showNotification('❌ Заказ отменён', 'Пассажир отменил поездку', 'cancel-' + d.orderId);
+    }
+    else if(d.type === 'order-updated' && ME.role === 'passenger'){
+      const labels = {
+        'Водитель едет':     '🚕 Водитель едет к вам',
+        'Водитель на месте': '📍 Водитель на месте',
+        'В пути':            '🚗 Поездка началась',
+        'Завершена':         '✅ Поездка завершена'
+      };
+      if(labels[d.status]){
+        vibrate([150, 80, 150]);
+        showNotification(labels[d.status], 'QADAM TAXI', 'status-' + d.orderId);
+      }
+    }
+  };
+  ws.onclose = () => { setTimeout(() => { if(TOKEN) connectWS(); }, 2000); };
+}
+
+async function refreshState(){
+  const data = await api('/api/state');
+  state = { orders: data.orders, drivers: data.drivers, commissionRate: data.commissionRate ?? 0.15 };
+  render(); drawMap();
+}
+
+/* ================= ГЕОЛОКАЦИЯ ВОДИТЕЛЯ ================= */
+function startGeolocation(){
+  if(!('geolocation' in navigator)){ setGpsStatus('error', 'GPS не поддерживается'); return; }
+  if(geoWatchId !== null) return;
+  setGpsStatus('', 'Определяем координаты…');
+  geoWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      const now = Date.now();
+      if(now - lastLocationSentAt > 3000){
+        lastLocationSentAt = now;
+        if(ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'driver-location', lat, lng }));
+      }
+      setGpsStatus('active', `GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    },
+    err => {
+      const m = { 1:'Разрешите доступ к геолокации', 2:'GPS недоступен', 3:'Таймаут GPS' };
+      setGpsStatus('error', m[err.code] || 'Ошибка GPS');
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+  );
+}
+function stopGeolocation(){
+  if(geoWatchId !== null){ navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; }
+  setGpsStatus('', 'GPS не активен');
+}
+function setGpsStatus(s, text){
+  const bar = $('#gpsBar'), txt = $('#gpsText');
+  if(!bar) return;
+  bar.className = 'gps-bar' + (s ? ' ' + s : '');
+  txt.textContent = text;
+}
+
+/* ================= АДРЕСА + КАРТА ================= */
+function setFrom(p){
+  fromPoint = p;
+  $('#fromInput').value = p.name;
+  $('#fromStatus').textContent = '';
+  updatePrice(); drawMap();
+}
+function setTo(p){
+  toPoint = p;
+  $('#toInput').value = p.name;
+  $('#toStatus').textContent = '';
+  updatePrice(); drawMap();
+}
+
+function startPicking(which){
+  if(pickingMode === which){
+    pickingMode = null;
+    document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('active'));
+    if(map) map.getContainer().style.cursor = '';
+    return;
+  }
+  pickingMode = which;
+  document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('active'));
+  const btn = which === 'from' ? $('#fromBtn') : $('#toBtn');
+  btn.classList.add('active');
+  if(map) map.getContainer().style.cursor = 'crosshair';
+  toast(which === 'from' ? '🗺 Тапни на карту — откуда' : '🗺 Тапни на карту — куда');
+  if(navigator.vibrate) navigator.vibrate(60);
+}
+
+async function reverseGeocode(lat, lng){
+  try {
+    const data = await api(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
+    return data.name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  } catch(e){
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  }
+}
+
+async function searchAddress(q){
+  try {
+    const data = await api('/api/geocode/search?q=' + encodeURIComponent(q));
+    return data.results || [];
+  } catch(e){
+    console.error('[search] error:', e);
+    return [];
+  }
+}
+
+function setupAddressInput(inputId, suggestId, statusId, which){
+  const input  = document.getElementById(inputId);
+  const sugg   = document.getElementById(suggestId);
+  const status = document.getElementById(statusId);
+  if(!input || !sugg) return;
+
+  input.addEventListener('input', () => {
+    clearTimeout(searchTimers[which]);
+    const q = input.value.trim();
+    if(q.length < 3){
+      sugg.classList.remove('show');
+      status.textContent = '';
+      status.classList.remove('error');
+      return;
+    }
+    status.textContent = '🔍 Ищем…';
+    status.classList.remove('error');
+    sugg.classList.remove('show');
+
+    searchTimers[which] = setTimeout(async () => {
+      const results = await searchAddress(q);
+      if(!results.length){
+        status.textContent = '❌ Ничего не найдено. Тапни 📍 и укажи на карте';
+        status.classList.add('error');
+        return;
+      }
+      status.textContent = `Найдено: ${results.length}`;
+      status.classList.remove('error');
+
+      sugg.innerHTML = results.map((r, i) => {
+        const parts = String(r.display_name || '').split(',');
+        const short = parts.slice(0, 2).join(',').trim();
+        const rest  = parts.slice(2).join(',').trim();
+        const src   = r.source === 'local' ? '<span class="src">локально</span>' : '';
+        return `<div class="suggest-item" data-i="${i}">
+          ${src}
+          <b>${esc(short)}</b>
+          ${rest ? `<small>${esc(rest)}</small>` : ''}
+        </div>`;
+      }).join('');
+      sugg.classList.add('show');
+
+      sugg.querySelectorAll('.suggest-item').forEach(el => {
+        el.onclick = () => {
+          const r = results[Number(el.dataset.i)];
+          const point = { lat: Number(r.lat), lng: Number(r.lon), name: r.display_name };
+          if(which === 'from') setFrom(point); else setTo(point);
+          sugg.classList.remove('show');
+          status.textContent = '';
+          if(navigator.vibrate) navigator.vibrate(40);
+        };
+      });
+    }, 400);
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => sugg.classList.remove('show'), 250);
+  });
+}
+
+/* ================= ЗАКАЗ ================= */
+function updatePrice(){
+  if(!fromPoint || !toPoint){
+    $('#distLabel').textContent = '—';
+    $('#priceTag').textContent  = '—';
+    return;
+  }
+  const dist = haversine(fromPoint, toPoint);
+  const price = calcPrice(dist, $('#class').value);
+  $('#distLabel').textContent = dist.toFixed(1) + ' км';
+  $('#priceTag').textContent  = price.toLocaleString('ru-RU') + ' ₸';
+}
+
+async function createOrder(){
+  const errEl = $('#orderError');
+  errEl.textContent = '';
+  errEl.classList.remove('error');
+
+  if(!fromPoint){
+    errEl.textContent = '⚠️ Укажите точку «Откуда»';
+    errEl.classList.add('error');
+    toast('Укажите откуда', true);
+    return;
+  }
+  if(!toPoint){
+    errEl.textContent = '⚠️ Укажите точку «Куда»';
+    errEl.classList.add('error');
+    toast('Укажите куда', true);
+    return;
+  }
+  if(fromPoint.lat === toPoint.lat && fromPoint.lng === toPoint.lng){
+    errEl.textContent = '⚠️ Точки совпадают';
+    errEl.classList.add('error');
+    return;
+  }
+
+  const btn = $('#orderBtn');
+  btn.disabled = true;
+  btn.textContent = 'Отправляем…';
+
+  try {
+    const order = await api('/api/orders', { method:'POST',
+      body: JSON.stringify({
+        from: { lat: fromPoint.lat, lng: fromPoint.lng, name: fromPoint.name },
+        to:   { lat: toPoint.lat,   lng: toPoint.lng,   name: toPoint.name },
+        class: $('#class').value
+      }) });
+
+    console.log('[order] created:', order.id);
+    currentOrderId = order.id;
+    fromPoint = null; toPoint = null;
+    $('#fromInput').value = ''; $('#toInput').value = '';
+    errEl.textContent = '';
+    toast('🔎 Ищем водителя…');
+    await refreshState();
+  } catch(e){
+    console.error('[createOrder] error:', e);
+    errEl.textContent = '❌ ' + e.message;
+    errEl.classList.add('error');
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Заказать такси';
+  }
+}
+
+async function cancelOrder(){
+  const a = state.orders.find(o =>
+    o.passengerId === ME.id && !['Завершена','Отменена'].includes(o.status));
+  if(!a) return;
+  if(!confirm('Отменить заказ?')) return;
+  try { await api(`/api/orders/${a.id}`, { method:'PATCH', body: JSON.stringify({ action:'cancel' }) }); }
+  catch(e){ toast(e.message, true); }
+}
+
+/* ================= ВОДИТЕЛЬ ================= */
+async function toggleOnline(){
+  try {
+    const updated = await api('/api/drivers/me/online', { method:'POST' });
+    if(updated.status === 'online'){
+      if(notifPermission !== 'granted') showNotifyBanner();
+      startGeolocation();
+      playOrderBeep(); vibrate(200);
+      toast('🟢 Вы на линии');
+    } else {
+      stopGeolocation();
+      toast('🔴 Вы не на линии');
+    }
+  } catch(e){ toast(e.message, true); }
+}
+async function driverAction(a){
+  const o = state.orders.find(x =>
+    x.driverId === ME.id && !['Завершена','Отменена'].includes(x.status));
+  if(!o) return;
+  try {
+    await api(`/api/orders/${o.id}`, { method:'PATCH', body: JSON.stringify({ action:a }) });
+    if(a === 'finish'){ toast('✅ Поездка завершена'); vibrate([200,100,200]); }
+  } catch(e){ toast(e.message, true); }
+}
+
+/* ================= ЧАТ ================= */
+async function loadMessages(){
+  if(!currentOrderId) return;
+  try { renderMessages(await api(`/api/orders/${currentOrderId}/messages`)); } catch(e){}
+}
+function renderMessages(msgs){
+  ['passChatMessages','driverChatMessages'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = msgs.length
+      ? msgs.map(m => `<div class="chat-msg ${m.from === ME.id ? 'mine' : 'theirs'}">
+          <div class="chat-meta">${esc(m.fromName)} · ${new Date(m.at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</div>
+          ${esc(m.text)}</div>`).join('')
+      : '<div class="empty">Нет сообщений</div>';
+    el.scrollTop = el.scrollHeight;
+  });
+}
+async function sendMessage(who){
+  if(!currentOrderId) return;
+  const input = document.getElementById(who === 'passenger' ? 'passChatInput' : 'driverChatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  try { await api(`/api/orders/${currentOrderId}/messages`, { method:'POST', body: JSON.stringify({ text }) }); }
+  catch(e){ toast(e.message, true); }
+}
+
+/* ================= АДМИН ================= */
+async function clearAll(){
+  if(!confirm('Удалить все заказы и сбросить водителей?')) return;
+  try { await api('/api/admin/clear', { method:'POST' }); toast('Очищено'); }
+  catch(e){ toast(e.message, true); }
+}
+async function loadQR(){
+  try {
+    const info = await api('/api/server-info');
+    const url = info.urls[0] || info.localhost;
+    $('#qrImg').src = '/api/qr?url=' + encodeURIComponent(url);
+    $('#qrUrl').textContent = url;
+  } catch(e){}
+}
+
+/* ================= КАРТА ================= */
+let map = null, routeLayer = null, driverLayer = null;
+const driverMarkers = new Map();
+
+function initMap(slotId){
+  if(!map){
+    map = L.map(slotId, { zoomControl:true }).setView([CITY_CENTER.lat, CITY_CENTER.lng], 13);
+
+    /* Запасные серверы плиток */
+    const tileServers = [
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+      'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+      'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
+    ];
+    let currentTileLayer = null;
+    let tileIdx = 0;
+    function loadTiles(){
+      if(currentTileLayer) map.removeLayer(currentTileLayer);
+      const url = tileServers[tileIdx];
+      console.log('[map] плитки:', url);
+      currentTileLayer = L.tileLayer(url, {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      currentTileLayer.on('tileerror', () => {
+        tileIdx = (tileIdx + 1) % tileServers.length;
+        console.warn('[map] сервер не отвечает, переключаюсь на', tileServers[tileIdx]);
+        setTimeout(loadTiles, 500);
+      });
+    }
+    loadTiles();
+
+    routeLayer = L.layerGroup().addTo(map);
+    driverLayer = L.layerGroup().addTo(map);
+
+    map.on('click', async (e) => {
+      if(ME.role !== 'passenger') return;
+
+      let which = pickingMode;
+      if(!which){
+        if(!fromPoint) which = 'from';
+        else if(!toPoint) which = 'to';
+        else { toast('Обе точки уже указаны. Сбросьте одну или нажмите 📍'); return; }
+      }
+
+      const { lat, lng } = e.latlng;
+      pickingMode = null;
+      document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('active'));
+      map.getContainer().style.cursor = '';
+
+      const status = document.getElementById(which === 'from' ? 'fromStatus' : 'toStatus');
+      if(status){ status.textContent = '🔍 Определяем адрес…'; status.classList.remove('error'); }
+
+      const name = await reverseGeocode(lat, lng);
+      const point = { lat, lng, name };
+      if(which === 'from') setFrom(point); else setTo(point);
+
+      toast('📍 ' + shortName(name));
+      if(navigator.vibrate) navigator.vibrate(60);
+    });
+  } else {
+    const slot = document.getElementById(slotId);
+    const el = map.getContainer();
+    if(el.parentNode !== slot){ slot.innerHTML = ''; slot.appendChild(el); }
+  }
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+const carIcon = (isMe, hasGps) => L.divIcon({
+  className: 'car-marker' + (isMe ? ' me' : '') + (hasGps ? ' gps' : ''),
+  html: '<div>🚕</div>', iconSize:[34,24], iconAnchor:[17,12]
+});
+const pinIcon = color => L.divIcon({
+  className:'pin-marker',
+  html:`<div style="background:${color}"></div>`,
+  iconSize:[22,22], iconAnchor:[11,22]
+});
+
+function updateDriverMarker(d){
+  const isMe = d.id === ME.id;
+  const hasGps = !!d.lastSeen;
+  let marker = driverMarkers.get(d.id);
+  if(marker){
+    marker.setLatLng([d.lat, d.lng]);
+    marker.setIcon(carIcon(isMe, hasGps));
+  } else {
+    marker = L.marker([d.lat, d.lng], { icon:carIcon(isMe, hasGps) }).addTo(driverLayer);
+    driverMarkers.set(d.id, marker);
+  }
+  const st = d.status === 'busy' ? '🟡 Занят' : d.status === 'online' ? '🟢 Свободен' : '🔴 Не на линии';
+  const gpsInfo = hasGps ? '<br><small>📍 GPS активен</small>' : '';
+  marker.bindTooltip(
+    `<b>${esc(d.name)}</b><br>${esc(d.car)} · ${esc(d.plate)}<br>${st}${gpsInfo}`,
+    { direction:'top' }
+  );
+}
+
+function drawMap(){
+  if(!map) return;
+  routeLayer.clearLayers();
+
+  let active = null;
+  if(ME.role === 'passenger')
+    active = state.orders.find(o => o.passengerId === ME.id && !['Завершена','Отменена'].includes(o.status));
+  else if(ME.role === 'driver')
+    active = state.orders.find(o => o.driverId === ME.id && !['Завершена','Отменена'].includes(o.status));
+  else
+    active = state.orders.find(o => !['Завершена','Отменена'].includes(o.status));
+
+  if(active){
+    const f = active.from, t = active.to;
+    L.marker([f.lat, f.lng], { icon:pinIcon('#22c55e') }).addTo(routeLayer).bindTooltip(shortName(f.name));
+    L.marker([t.lat, t.lng], { icon:pinIcon('#ef4444') }).addTo(routeLayer).bindTooltip(shortName(t.name));
+    L.polyline([[f.lat,f.lng],[t.lat,t.lng]],
+      { color:'#ffd400', weight:4, dashArray:'10 8' }).addTo(routeLayer);
+    map.fitBounds([[f.lat,f.lng],[t.lat,t.lng]], { padding:[40,40], maxZoom:14 });
+  }
+  else if(ME.role === 'passenger'){
+    if(fromPoint){
+      L.marker([fromPoint.lat, fromPoint.lng], { icon:pinIcon('#22c55e') })
+        .addTo(routeLayer).bindTooltip(shortName(fromPoint.name));
+    }
+    if(toPoint){
+      L.marker([toPoint.lat, toPoint.lng], { icon:pinIcon('#ef4444') })
+        .addTo(routeLayer).bindTooltip(shortName(toPoint.name));
+    }
+    if(fromPoint && toPoint){
+      L.polyline([[fromPoint.lat,fromPoint.lng],[toPoint.lat,toPoint.lng]],
+        { color:'#ffd400', weight:4, dashArray:'10 8' }).addTo(routeLayer);
+      map.fitBounds(
+        [[fromPoint.lat,fromPoint.lng],[toPoint.lat,toPoint.lng]],
+        { padding:[40,40], maxZoom:14 }
+      );
+    }
+  }
+
+  const seen = new Set();
+  state.drivers.forEach(d => { seen.add(d.id); updateDriverMarker(d); });
+  for(const [id, marker] of driverMarkers){
+    if(!seen.has(id)){ marker.remove(); driverMarkers.delete(id); }
+  }
+}
+
+/* ================= ОТРИСОВКА ================= */
+function statusClass(s){
+  if(s === 'Завершена') return 'green';
+  if(s === 'Отменена')  return 'red';
+  if(s === 'Ищем водителя') return 'yellow';
+  return 'blue';
+}
+function render(){
+  if(!ME) return;
+  if(ME.role === 'passenger') renderPassenger();
+  if(ME.role === 'driver')    renderDriver();
+  if(ME.role === 'admin')     renderAdmin();
+}
+
+function renderPassenger(){
+  const active = state.orders.find(o =>
+    o.passengerId === ME.id && !['Завершена','Отменена'].includes(o.status));
+  const last = state.orders
+    .filter(o => o.passengerId === ME.id)
+    .sort((a,b) => b.createdAt - a.createdAt)[0];
+
+  const card = $('#passOrderCard'), btn = $('#orderBtn');
+
+  if(active){
+    currentOrderId = active.id;
+    card.style.display = 'block';
+    const st = $('#passStatus');
+    st.textContent = (active.status === 'Ищем водителя' ? '🔎 ' : '🚕 ') + active.status;
+    st.className = 'status ' + (active.status === 'Ищем водителя' ? 'search' : '');
+    $('#passPrice').textContent = active.price.toLocaleString('ru-RU') + ' ₸';
+    const d = active.driverId ? state.drivers.find(x => x.id === active.driverId) : null;
+    $('#passDriver').textContent = d ? `${d.name} · ⭐ ${d.rating}` : '—';
+    $('#passCar').textContent    = d ? `${d.car} · ${d.plate}` : '—';
+    $('#cancelBtn').style.display = 'block';
+    btn.disabled = true;
+    $('#passChat').classList.toggle('hidden', !active.driverId);
+    if(active.driverId) loadMessages();
+  } else {
+    currentOrderId = last ? last.id : null;
+    if(last){
+      card.style.display = 'block';
+      const st = $('#passStatus');
+      st.textContent = last.status === 'Завершена' ? '✅ Поездка завершена' : '❌ Заказ отменён';
+      st.className = 'status ' + (last.status === 'Завершена' ? 'done' : 'cancel');
+      $('#passPrice').textContent = last.price.toLocaleString('ru-RU') + ' ₸';
+      const d = last.driverId ? state.drivers.find(x => x.id === last.driverId) : null;
+      $('#passDriver').textContent = d ? `${d.name} · ⭐ ${d.rating}` : '—';
+      $('#passCar').textContent    = d ? `${d.car} · ${d.plate}` : '—';
+      $('#cancelBtn').style.display = 'none';
+    } else card.style.display = 'none';
+    btn.disabled = false;
+    $('#passChat').classList.add('hidden');
+  }
+
+  const hist = state.orders
+    .filter(o => o.passengerId === ME.id && ['Завершена','Отменена'].includes(o.status))
+    .sort((a,b) => b.createdAt - a.createdAt);
+  $('#passHistory').innerHTML = hist.length
+    ? hist.slice(0, 30).map(o => `<div class="history-item">
+        <div>
+          <div>${esc(shortName(o.from.name))}</div>
+          <div class="muted">→ ${esc(shortName(o.to.name))}</div>
+        </div>
+        <div style="text-align:right">
+          <b>${Number(o.price).toLocaleString('ru-RU')} ₸</b><br>
+          <span class="badge ${statusClass(o.status)}">${esc(o.status)}</span>
+        </div>
+      </div>`).join('')
+    : '<div class="empty">Пока нет поездок</div>';
+}
+
+function renderDriver(){
+  const me = state.drivers.find(d => d.id === ME.id);
+  if(!me) return;
+
+  const btn = $('#onlineBtn');
+  btn.textContent = me.status === 'online' ? '🟢 На линии'
+    : me.status === 'busy' ? '🟡 В заказе' : '🔴 Не на линии';
+  btn.style.background = me.status === 'online' ? '#dcfce7'
+    : me.status === 'busy' ? '#fef3c7' : '#fee2e2';
+  btn.style.color = me.status === 'online' ? '#166534'
+    : me.status === 'busy' ? '#92400e' : '#991b1b';
+  btn.disabled = me.status === 'busy';
+
+  if(me.status === 'online' && geoWatchId === null) startGeolocation();
+  if(me.status === 'offline' && geoWatchId !== null) stopGeolocation();
+
+  const order = state.orders.find(o =>
+    o.driverId === ME.id && !['Завершена','Отменена'].includes(o.status));
+
+  const el = $('#driverOrder');
+  if(order){
+    currentOrderId = order.id;
+    const f = order.from, t = order.to;
+    el.innerHTML = `
+      <div class="status search">🔔 ${esc(order.status)}</div>
+      <div style="padding:8px 0">
+        <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.4px">Откуда</div>
+        <b style="font-size:14px;line-height:1.3">${esc(f.name)}</b>
+        <div style="text-align:center;color:#9ca3af;margin:6px 0">↓</div>
+        <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.4px">Куда</div>
+        <b style="font-size:14px;line-height:1.3">${esc(t.name)}</b>
+      </div>
+      <div class="muted" style="text-align:center;margin:8px 0">Пассажир: <b>${esc(order.passengerName)}</b></div>
+      <div class="muted" style="text-align:center">${esc(order.class)} · ${order.distKm} км</div>
+
+      <div class="calc" style="margin-top:10px">
+        <div class="row"><span class="muted">К оплате пассажиром</span><b>${order.price.toLocaleString('ru-RU')} ₸</b></div>
+        <div class="row"><span class="muted">Комиссия компании (${Math.round((state.commissionRate||0.15)*100)}%)</span><b style="color:#991b1b">− ${order.commission.toLocaleString('ru-RU')} ₸</b></div>
+        <div class="row" style="border-top:1px solid #e5e7eb;padding-top:6px;margin-top:4px">
+          <span class="muted">Ваша доля</span>
+          <b style="color:#166534;font-size:16px">${order.driverEarning.toLocaleString('ru-RU')} ₸</b>
+        </div>
+      </div>
+
+      ${order.status === 'Водитель едет'     ? '<button class="primary" onclick="driverAction(\'arrived\')">📍 Я на месте</button>' : ''}
+      ${order.status === 'Водитель на месте' ? '<button class="primary" onclick="driverAction(\'start\')">🚀 Начать поездку</button>' : ''}
+      ${order.status === 'В пути'            ? '<button class="primary" onclick="driverAction(\'finish\')">🏁 Завершить</button>' : ''}
+
+      <div class="chat-box">
+        <h4>Чат с пассажиром</h4>
+        <div id="driverChatMessages" class="chat-messages"></div>
+        <div class="chat-input">
+          <input id="driverChatInput" placeholder="Сообщение…" onkeydown="if(event.key==='Enter')sendMessage('driver')">
+          <button onclick="sendMessage('driver')">→</button>
+        </div>
+      </div>`;
+    loadMessages();
+  } else {
+    currentOrderId = null;
+    el.innerHTML = me.status === 'offline'
+      ? '<div class="status">Вы не на линии</div><p class="muted" style="text-align:center">Нажмите кнопку статуса, чтобы начать принимать заказы</p>'
+      : '<div class="status">Новых заказов нет</div><p class="muted" style="text-align:center">Ожидайте заказа…</p>';
+  }
+
+  $('#driverEarn').textContent  = me.earned.toLocaleString('ru-RU') + ' ₸';
+  $('#driverTrips').textContent = me.trips + ' поездок';
+  $('#driverGross').textContent = me.earnedGross
+    ? `Оборот: ${me.earnedGross.toLocaleString('ru-RU')} ₸ · комиссия: ${(me.earnedGross - me.earned).toLocaleString('ru-RU')} ₸`
+    : '';
+}
+
+function renderAdmin(){
+  const done = state.orders.filter(o => o.status === 'Завершена');
+  const revenue = done.reduce((s,o) => s + Number(o.price || 0), 0);
+  const commission = done.reduce((s,o) => s + Number(o.commission || 0), 0);
+  const onlineCount = state.drivers.filter(d => d.status === 'online' || d.status === 'busy').length;
+  const activeCount = state.orders.filter(o => !['Завершена','Отменена'].includes(o.status)).length;
+
+  $('#aOrders').textContent     = state.orders.length;
+  $('#aDrivers').textContent    = onlineCount;
+  $('#aActive').textContent     = activeCount;
+  $('#aRevenue').textContent    = revenue.toLocaleString('ru-RU') + ' ₸';
+  $('#aCommission').textContent = commission.toLocaleString('ru-RU') + ' ₸';
+
+  $('#orders').innerHTML = state.orders.length
+    ? state.orders.slice(0, 80).map(o => `<tr>
+        <td>${esc(o.id)}</td>
+        <td>${esc(shortName(o.from.name))} → ${esc(shortName(o.to.name))}</td>
+        <td>${Number(o.price).toLocaleString('ru-RU')} ₸</td>
+        <td style="color:#991b1b">${Number(o.commission || 0).toLocaleString('ru-RU')} ₸</td>
+        <td style="color:#166534">${Number(o.driverEarning || 0).toLocaleString('ru-RU')} ₸</td>
+        <td><span class="badge ${statusClass(o.status)}">${esc(o.status)}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="empty">Заказов нет</td></tr>';
+
+  $('#adminDrivers').innerHTML = state.drivers.map(d => {
+    const cls = d.status === 'online' ? 'green' : d.status === 'busy' ? 'yellow' : 'gray';
+    const lbl = d.status === 'online' ? 'Свободен' : d.status === 'busy' ? 'Занят' : 'Оффлайн';
+    const gps = d.lastSeen ? `<span style="color:#22c55e"> · 📍 GPS</span>` : '';
+    return `<div class="driver">
+      <div>
+        <div class="driver-name">🚕 ${esc(d.name)}${gps}</div>
+        <div class="driver-sub">${esc(d.car)} · ${esc(d.plate)} · ⭐ ${d.rating} · ${d.trips} поездок · заработал ${d.earned.toLocaleString('ru-RU')} ₸</div>
+      </div>
+      <span class="badge ${cls}">${lbl}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ================= РЕАКТИВНОСТЬ ================= */
+document.addEventListener('change', e => {
+  if(e.target.matches('#class')){ updatePrice(); }
+});
+window.addEventListener('resize', () => setTimeout(() => map?.invalidateSize(), 100));
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && TOKEN){
+    if(!ws || ws.readyState > 1) connectWS();
+  }
+});
+
+/* ================= СТАРТ ================= */
+(async function(){
+  registerSW();
+  if(TOKEN){
+    try {
+      const me = await api('/api/me');
+      ME = me.user;
+      await enterApp();
+    } catch(e){ localStorage.removeItem('qadam_token'); TOKEN = ''; }
+  }
+})();
+</script>
+</body>
+</html>
